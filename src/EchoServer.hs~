@@ -1,0 +1,65 @@
+{-# LANGUAGE DataKinds       #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators   #-}
+
+
+module Lib
+    ( startApp
+    ) where
+
+import Data.Aeson
+import Data.Aeson.TH
+import Network.Wai
+import Network.Wai.Handler.Warp
+import Servant
+import Data.Char
+import 
+
+data User = User
+  {
+    userId        :: Int
+  , userFirstName :: String
+  , userLastName  :: String
+  } deriving (Eq, Show)
+
+data HelloMessage = HelloMessage
+  {
+    msg :: String
+  } deriving (Eq, Show)
+
+$(deriveJSON defaultOptions ''User)
+$(deriveJSON defaultOptions ''HelloMessage)
+
+type API = "users" :> Get '[JSON] [User]
+            :<|> "hello" :> QueryParam "msg" String :> Get '[JSON] String
+
+startApp :: IO ()
+startApp = run 8080 app
+
+app :: Application
+app = serve api server
+
+api :: Proxy API
+api = Proxy
+
+server :: Server API
+server = return helloMessage1
+
+helloMessage1 :: String (ExceptT ServantErr IO)
+helloMessage1 = "abc"
+
+--users
+--        :<|> hello
+--      where
+--        hello :: Maybe String -> Handler HelloMessage
+--        hello mname = return . HelloMessage $ case mname of
+--          Nothing -> "Hello, world"
+--         Just n  -> "Hello, " ++ uppercase n
+
+users :: [User]
+users = [ User 1 "Isaac" "Newton"
+        , User 2 "Albert" "Einstein"
+        ]
+
+uppercase :: String -> String
+uppercase = map toUpper
